@@ -1,0 +1,4 @@
+<?php
+namespace MarineVideoPortal\Core;
+use PDO;
+class Database{private static ?PDO $pdo=null;public static function connection():PDO{if(self::$pdo)return self::$pdo;$h=$_ENV['DB_HOST']??'127.0.0.1';$po=$_ENV['DB_PORT']??'3306';$db=$_ENV['DB_DATABASE']??'';$u=$_ENV['DB_USERNAME']??'';$pw=$_ENV['DB_PASSWORD']??'';$dsn="mysql:host=$h;port=$po;dbname=$db;charset=utf8mb4";self::$pdo=new PDO($dsn,$u,$pw,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);return self::$pdo;}public static function fetchAll($s,$p=[]){$st=self::connection()->prepare($s);$st->execute($p);return $st->fetchAll(PDO::FETCH_ASSOC);}public static function fetchOne($s,$p=[]){$st=self::connection()->prepare($s);$st->execute($p);$r=$st->fetch(PDO::FETCH_ASSOC);return $r?:null;}public static function exec($s,$p=[]){$st=self::connection()->prepare($s);$st->execute($p);return $st->rowCount();}}
