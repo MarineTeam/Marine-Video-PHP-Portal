@@ -10,7 +10,7 @@ class BunnyService {
     $opts=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>$headers,CURLOPT_CUSTOMREQUEST=>$method];
     if($body!==null) $opts[CURLOPT_POSTFIELDS]=json_encode($body);
     curl_setopt_array($ch,$opts);
-    $res=curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); $err=curl_error($ch); curl_close($ch);
+    $res=curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
     if($code>=400) throw new \Exception("Bunny API $code: $res URL $url");
     return json_decode($res,true)??[];
   }
@@ -22,9 +22,25 @@ class BunnyService {
     $exp=time()+$ttl; $token=hash('sha256',$this->tokenKey.$guid.$exp);
     return "https://iframe.mediadelivery.net/embed/{$this->libId}/$guid?token=$token&expires=$exp&autoplay=false";
   }
-  public function thumbnailUrl(string $guid): string {
+  public function thumbnailUrl(string $guid,int $ttl=3600): string {
+    $exp=time()+$ttl;
+    if($this->tokenKey){
+      $token=hash('sha256',$this->tokenKey.$guid.$exp);
+      if($this->cdnHost){
+        return "https://{$this->cdnHost}/{$guid}/thumbnail.jpg?token=$token&expires=$exp";
+      }
+      return "https://iframe.mediadelivery.net/{$this->libId}/$guid/thumbnail.jpg?token=$token&expires=$exp";
+    }
     if($this->cdnHost) return "https://{$this->cdnHost}/{$guid}/thumbnail.jpg";
     return "https://iframe.mediadelivery.net/{$this->libId}/$guid/preview.jpg";
+  }
+  public function previewUrl(string $guid,int $ttl=3600): string {
+    $exp=time()+$ttl;
+    if($this->tokenKey){
+      $token=hash('sha256',$this->tokenKey.$guid.$exp);
+      if($this->cdnHost) return "https://{$this->cdnHost}/{$guid}/preview.webp?token=$token&expires=$exp";
+    }
+    return $this->thumbnailUrl($guid,$ttl);
   }
   public function syncToDb(): int {
     $count=0; $page=1;
