@@ -13,6 +13,15 @@ class WatermarkService {
     if($shareWm!=='default' && $shareWm!=='') return $shareWm;
     $vm=\MarineVideoPortal\Core\Database::fetchOne("SELECT watermark_mode FROM videos_meta WHERE guid=?",[$guid]);
     if($vm && ($vm['watermark_mode']??'default')!=='default') return $vm['watermark_mode'];
-    return $_ENV['WATERMARK_DEFAULT']??'email';
+    return $_ENV['WATERMARK_DEFAULT']??'none';
+  }
+  public static function displayText(string $mode,string $email): string {
+    if($mode==='none' || $mode==='') return '';
+    if($mode==='private' || $mode==='default') return '';
+    if($mode==='email'){
+      if(($_ENV['WATERMARK_SHOW_EMAIL']??'false')!=='true') return '';
+      return $email;
+    }
+    return '';
   }
 }
