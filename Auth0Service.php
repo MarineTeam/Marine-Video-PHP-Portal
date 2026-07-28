@@ -1,0 +1,29 @@
+<?php
+namespace MarineVideoPortal\Auth;
+class Auth0Service {
+  public static function normalizeEmail($e){return strtolower(trim((string)$e));}
+  public static function isAdmin($email){
+    $list=array_filter(array_map([self::class,'normalizeEmail'], explode(',', $_ENV['ADMIN_EMAILS']??'')));
+    return in_array(self::normalizeEmail($email),$list,true);
+  }
+  public static function loginUrl(){
+    $d=$_ENV['AUTH0_DOMAIN']??''; $c=$_ENV['AUTH0_CLIENT_ID']??'';
+    $r=rtrim($_ENV['APP_URL']??'','/').'/auth/callback';
+    $s=bin2hex(random_bytes(16)); $_SESSION['oauth_state']=$s;
+    return "https://$d/authorize?".http_build_query(['response_type'=>'code','client_id'=>$c,'redirect_uri'=>$r,'scope'=>'openid profile email','state'=>$s]);
+  }
+  public static function handleCallback(){
+    $d=$_ENV['AUTH0_DOMAIN']??''; $c=$_ENV['AUTH0_CLIENT_ID']??''; $sec=$_ENV['AUTH0_CLIENT_SECRET']??'';
+    $r=rtrim($_ENV['APP_URL']??'','/').'/auth/callback';
+    if(($_GET['state']??'')!==($_SESSION['oauth_state']??'')) throw new \Exception('Invalid state');
+    $ch=curl_init("https://$d/oauth/token");
+    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode(['grant_type'=>'authorization_code','client_id'=>$c,'client_secret'=>$sec,'code'=>$_GET['code']??'','redirect_uri'=>$r]),CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_RETURNTRANSFER=>true]);
+    $res=curl_exec($ch); curl_close($ch); $data=json_decode($res,true);
+    if(empty($data['access_token'])) throw new \Exception('Token fail: '.$res);
+    $ch=curl_init("https://$d/userinfo"); curl_setopt_array($ch,[CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$data['access_token']],CURLOPT_RETURNTRANSFER=>true]);
+    $u=curl_exec($ch); curl_close($ch); $info=json_decode($u,true);
+    $_SESSION['user']=$info; return $info;
+  }
+  public static function currentUser(){return $_SESSION['user']??null;}
+  public static function logoutUrl(){ $d=$_ENV['AUTH0_DOMAIN']??''; $c=$_ENV['AUTH0_CLIENT_ID']??''; $r=rtrim($_ENV['APP_URL']??'','/'); return "https://$d/v2/logout?client_id=$c&returnTo=".urlencode($r); }
+}
