@@ -16,8 +16,8 @@ class WatermarkService {
     return $_ENV['WATERMARK_DEFAULT']??'none';
   }
   public static function displayText(string $mode,string $email): string {
-    if($mode==='none' || $mode==='') return '';
-    if($mode==='private' || $mode==='default') return '';
+    if($mode==='none' || $mode==='' || $mode==='default') return '';
+    if($mode==='private') return '';
     if($mode==='email'){
       if(($_ENV['WATERMARK_SHOW_EMAIL']??'false')!=='true') return '';
       return $email;

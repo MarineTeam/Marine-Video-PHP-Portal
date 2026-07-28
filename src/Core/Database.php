@@ -14,8 +14,6 @@ class Database {
     if($driver==='sqlite'){
       $dsn='sqlite:'.$db; if(!is_dir(dirname($db))) @mkdir(dirname($db),0755,true);
       self::$pdo=new PDO($dsn,null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-    } elseif($driver==='pgsql'){
-      $dsn="pgsql:host=$host;port=$port;dbname=$db"; self::$pdo=new PDO($dsn,$user,$pass,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     } else {
       $dsn="mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4"; self::$pdo=new PDO($dsn,$user,$pass,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     }

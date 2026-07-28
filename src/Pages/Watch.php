@@ -5,6 +5,7 @@ use MarineVideoPortal\Models\Video;
 use MarineVideoPortal\Services\WatermarkService;
 class Watch {
   public static function render(string $guid){
+    \MarineVideoPortal\Auth\Auth0Service::requireApproved();
     $meta=Video::find($guid); if(!$meta){ http_response_code(404); die('Video not found - sync in admin'); }
     $bunny=new BunnyService(); $embed=$bunny->signedEmbedUrl($guid);
     $email=$_SESSION['viewer_email']??$_SESSION['user']['email']??'';
