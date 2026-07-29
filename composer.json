@@ -9,23 +9,13 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
-    "guzzlehttp/guzzle": "^7.8",
-    "firebase/php-jwt": "^6.11.1",
-    "phpmailer/phpmailer": "^6.9.3"
+    "guzzlehttp/guzzle": "^7.0",
+    "firebase/php-jwt": "^6.0",
+    "phpmailer/phpmailer": "^6.9"
   },
   "autoload": {
     "psr-4": {
       "MarinePortal\\": "src/"
-    }
-  },
-  "config": {
-    "allow-plugins": {},
-    "audit": {
-      "abandoned": "ignore",
-      "block": false,
-      "ignore": [
-        "PKSA-y2cr-5h3j-g3ys"
-      ]
     }
   }
 }
