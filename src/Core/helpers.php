@@ -1,6 +1,5 @@
 <?php
-function config(string $key=null) { static $cfg=null; if(!$cfg) $cfg=require ROOT.'/config.php'; if(!$key) return $cfg; $parts=explode('.',$key); $v=$cfg; foreach($parts as $p){ if(!isset($v[$p])) return null; $v=$v[$p]; } return $v; }
-function view(string $name, array $data=[]): void { extract($data); $file=ROOT."/src/Views/$name.php"; if(file_exists($file)) require $file; }
-function db(): \MarinePortal\Database\Connection { return \MarinePortal\Database\Connection::getInstance(); }
-function abort(int $code, string $msg=''){ http_response_code($code); echo $msg; exit; }
-function json_response($data,int $code=200){ http_response_code($code); header('Content-Type: application/json'); echo json_encode($data); exit; }
+function config($k=null){ static $cfg=null; if(!$cfg) $cfg=require ROOT.'/config.php'; if(!$k) return $cfg; $parts=explode('.',$k); $v=$cfg; foreach($parts as $p){ if(!isset($v[$p])) return null; $v=$v[$p]; } return $v; }
+function db(){ return \MarinePortal\Database\Connection::getInstance(); }
+function abort($c,$m=''){ http_response_code($c); echo $m; exit; }
+function json_response($d,$c=200){ http_response_code($c); header('Content-Type: application/json'); echo json_encode($d); exit; }
