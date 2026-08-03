@@ -299,9 +299,9 @@ include __DIR__ . '/nav.php';
             <input type="text" name="title" value="<?= h($v['title']) ?>">
             <button class="link-btn" type="submit">Save</button>
           </form>
-          <div class="muted small">
-            <?php if ($v['status'] === 'processing'): ?>Processing…
-            <?php elseif ($v['status'] === 'failed'): ?><span style="color:var(--danger)">Encoding failed</span>
+          <div class="muted small" data-video-status data-video-id="<?= (int)$v['id'] ?>">
+            <?php if ($v['status'] === 'processing'): ?>Processing… <button class="link-btn" data-refresh-status type="button">Refresh</button>
+            <?php elseif ($v['status'] === 'failed'): ?><span style="color:var(--danger)">Encoding failed</span> <button class="link-btn" data-refresh-status type="button">Retry check</button>
             <?php elseif ($v['bunny_video_id']): ?>bunny.net
             <?php elseif ($v['embed_url']): ?>External embed
             <?php else: ?>Local file
@@ -359,4 +359,5 @@ include __DIR__ . '/nav.php';
 
 <script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
 <script src="../assets/js/bunny-upload.js"></script>
+<script src="../assets/js/bunny-status-poll.js"></script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

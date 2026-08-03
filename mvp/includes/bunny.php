@@ -64,13 +64,14 @@ function bunny_get_video(string $guid): ?array
 }
 
 /** bunny status codes: 0 created, 1 uploaded, 2 processing, 3 transcoding, 4 finished, 5 error, 6 upload failed. */
-/** bunny.net status codes (confirmed against docs.bunny.net/stream/webhooks):
- *  0 Queued, 1 Processing, 2 Encoding, 3 Finished (fully available),
- *  4 Resolution finished (one resolution done — NOT the final state, more
- *  may still be encoding), 5 Failed. */
+/** bunny.net status codes (per docs.bunny.net/stream/webhooks):
+ *  0 Queued, 1 Processing, 2 Encoding, 3 Finished, 4 Resolution finished
+ *  (bunny's own docs: the FIRST occurrence of 4 signals the video is now
+ *  playable, even if other resolutions are still encoding) — so treat
+ *  either 3 or 4 as ready. 5 Failed. */
 function bunny_status_to_local(int $bunnyStatus): string
 {
-    if ($bunnyStatus === 3) return 'ready';
+    if ($bunnyStatus === 3 || $bunnyStatus === 4) return 'ready';
     if ($bunnyStatus === 5) return 'failed';
     return 'processing';
 }
