@@ -1,6 +1,11 @@
 <?php
 $tabs = [
     'videos.php' => 'Videos',
+];
+if (bunny_is_configured()) {
+    $tabs['bunny_import.php'] = 'Import (bunny.net)';
+}
+$tabs += [
     'viewers.php' => 'Viewers',
     'shares.php' => 'Shares',
     'settings.php' => 'Settings',
