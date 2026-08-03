@@ -117,7 +117,7 @@ include __DIR__ . '/nav.php';
 <?php if (bunny_stream_configured()): ?>
 <section>
   <h3>Upload to bunny.net</h3>
-  <p class="muted small">Uploads go straight from your browser to bunny.net over resumable TUS.</p>
+  <p class="muted small">Uploads go straight from your browser to bunny.net over resumable TUS. Already have videos on bunny.net from before? <a href="bunny_import.php?series_id=<?= (int)$seriesId ?>">Import them</a> instead of re-uploading.</p>
   <form id="bunny-upload-form" class="card" data-series-id="<?= (int)$seriesId ?>">
     <label>Title <input type="text" name="title" required></label>
     <label>Video file <input type="file" name="video_file" accept="video/*" required></label>
