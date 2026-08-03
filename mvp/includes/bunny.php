@@ -64,11 +64,22 @@ function bunny_get_video(string $guid): ?array
 }
 
 /** bunny status codes: 0 created, 1 uploaded, 2 processing, 3 transcoding, 4 finished, 5 error, 6 upload failed. */
+/** bunny.net status codes (confirmed against docs.bunny.net/stream/webhooks):
+ *  0 Queued, 1 Processing, 2 Encoding, 3 Finished (fully available),
+ *  4 Resolution finished (one resolution done — NOT the final state, more
+ *  may still be encoding), 5 Failed. */
 function bunny_status_to_local(int $bunnyStatus): string
 {
-    if ($bunnyStatus === 4) return 'ready';
-    if (in_array($bunnyStatus, [5, 6], true)) return 'failed';
+    if ($bunnyStatus === 3) return 'ready';
+    if ($bunnyStatus === 5) return 'failed';
     return 'processing';
+}
+
+function bunny_list_videos(int $page = 1, int $itemsPerPage = 100): array
+{
+    [$ok, $data, $err] = bunny_api_request('GET', '/library/' . BUNNY_LIBRARY_ID . '/videos?page=' . $page . '&itemsPerPage=' . $itemsPerPage . '&orderBy=date');
+    if (!$ok) return ['items' => [], 'totalItems' => 0, 'error' => $err];
+    return ['items' => $data['items'] ?? [], 'totalItems' => (int)($data['totalItems'] ?? 0), 'error' => null];
 }
 
 function bunny_delete_video(string $guid): bool

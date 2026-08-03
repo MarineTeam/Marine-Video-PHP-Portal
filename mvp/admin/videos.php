@@ -230,7 +230,7 @@ include __DIR__ . '/nav.php';
 <?php if (bunny_is_configured()): ?>
 <section>
   <h2>Upload to bunny.net</h2>
-  <p class="muted small">Uploads go straight from your browser to bunny.net over resumable TUS — the video never passes through this server. Encoding happens on bunny's side; the video shows "Processing…" until it's ready.</p>
+  <p class="muted small">Uploads go straight from your browser to bunny.net over resumable TUS — the video never passes through this server. Encoding happens on bunny's side; the video shows "Processing…" until it's ready. Already have videos on bunny.net from before? <a href="bunny_import.php">Import them</a> instead of re-uploading.</p>
   <form id="bunny-upload-form" class="card">
     <label>Title <input type="text" name="title" required></label>
     <label>Video file <input type="file" name="video_file" accept="video/*" required></label>
