@@ -133,6 +133,9 @@ include __DIR__ . '/nav.php';
           <a class="link-btn" href="series.php?edit=<?= (int)$s['id'] ?>">Edit</a>
           <a class="link-btn" href="videos.php?series_id=<?= (int)$s['id'] ?>">Videos</a>
           <a class="link-btn" href="files.php?series_id=<?= (int)$s['id'] ?>">Files</a>
+          <?php if (bunny_stream_configured()): ?>
+            <a class="link-btn" href="bunny_import.php?series_id=<?= (int)$s['id'] ?>">Import (bunny.net)</a>
+          <?php endif; ?>
           <a class="link-btn" href="permissions.php?scope_type=series&scope_id=<?= (int)$s['id'] ?>">Access</a>
           <form method="post" style="display:inline" onsubmit="return confirm('Delete this series and all its videos/files?')">
             <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
