@@ -143,8 +143,11 @@ include __DIR__ . '/nav.php';
           </form>
         </td>
         <td><?= $v['bunny_video_id'] ? 'bunny.net' : ($v['embed_url'] ? 'Embed' : 'Local') ?><?= $v['member_only'] ? ' · Members' : '' ?></td>
-        <td>
+        <td data-video-status data-video-id="<?= (int)$v['id'] ?>">
           <?= $v['status'] === 'processing' ? 'Processing…' : ($v['status'] === 'failed' ? '<span style="color:var(--danger)">Failed</span>' : ($v['published'] ? 'Published' : 'Draft')) ?>
+          <?php if (in_array($v['status'], ['processing', 'failed'], true) && $v['bunny_video_id']): ?>
+            <button class="link-btn" data-refresh-status type="button"><?= $v['status'] === 'failed' ? 'Retry check' : 'Refresh' ?></button>
+          <?php endif; ?>
           <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle_published"><input type="hidden" name="id" value="<?= (int)$v['id'] ?>"><button class="link-btn" type="submit">Toggle</button></form>
         </td>
         <td><?= (int)$v['view_count'] ?></td>
@@ -163,5 +166,6 @@ include __DIR__ . '/nav.php';
 <?php if (bunny_stream_configured()): ?>
 <script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
 <script src="../assets/js/bunny-upload.js"></script>
+<script src="../assets/js/bunny-status-poll.js"></script>
 <?php endif; ?>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

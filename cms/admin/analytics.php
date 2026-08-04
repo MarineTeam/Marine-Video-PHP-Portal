@@ -12,7 +12,9 @@ $chart = [];
 for ($i = 29; $i >= 0; $i--) { $d = date('Y-m-d', strtotime("-$i day")); $chart[] = ['date' => $d, 'count' => (int)($byDay[$d] ?? 0)]; }
 $maxCount = max(1, max(array_column($chart, 'count')));
 
-$mostWatchedSeries = db()->query('SELECT title, view_count, watch_seconds FROM series ORDER BY view_count DESC LIMIT 10')->fetchAll();
+$mostWatchedSeries = db()->query("SELECT s.title, s.view_count, COALESCE(SUM(v.watch_seconds),0) AS watch_seconds
+                                   FROM series s LEFT JOIN videos v ON v.series_id = s.id
+                                   GROUP BY s.id ORDER BY s.view_count DESC LIMIT 10")->fetchAll();
 $mostWatchedVideos = db()->query('SELECT title, view_count, watch_seconds FROM videos ORDER BY view_count DESC LIMIT 10')->fetchAll();
 
 $pageTitle = 'Admin · Analytics';
