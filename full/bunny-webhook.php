@@ -1,0 +1,46 @@
+<?php
+/**
+ * bunny.net Stream webhook receiver — configure this URL under your
+ * Stream library's Security tab -> Webhook URL, and encoding status
+ * changes update instantly instead of waiting for an admin to load the
+ * Videos tab for that series (which only polls reactively).
+ *
+ * Payload (per docs.bunny.net/stream/webhooks):
+ *   { "VideoLibraryId": 133, "VideoGuid": "...", "Status": 3 }
+ */
+require_once __DIR__ . '/config.php';
+
+$raw = file_get_contents('php://input');
+$data = json_decode($raw, true);
+
+if (!is_array($data) || empty($data['VideoGuid']) || !isset($data['Status'])) {
+    http_response_code(400);
+    exit('Bad payload');
+}
+
+// Reject payloads for a different library — the only verification available
+// without bunny.net's paid signature-verification feature. Combined with
+// this URL not being linked from anywhere public, that's reasonable, but if
+// you enable HMAC signature verification on the library, verify it here too.
+if (!empty($data['VideoLibraryId']) && (string)$data['VideoLibraryId'] !== (string)BUNNY_STREAM_LIBRARY_ID) {
+    http_response_code(403);
+    exit('Library mismatch');
+}
+
+$guid = $data['VideoGuid'];
+$newStatus = bunny_status_to_local((int)$data['Status']);
+
+$stmt = db()->prepare('SELECT id, title, status AS old_status FROM videos WHERE bunny_video_id = ?');
+$stmt->execute([$guid]);
+$video = $stmt->fetch();
+
+if ($video) {
+    db()->prepare('UPDATE videos SET status = ? WHERE id = ?')->execute([$newStatus, $video['id']]);
+    if ($newStatus === 'ready' && $video['old_status'] !== 'ready') {
+        audit_log('video.bunny_webhook_ready', $video['title']);
+        do_action('content_published', 'video', (int)$video['id']);
+    }
+}
+
+http_response_code(200);
+echo 'ok';
