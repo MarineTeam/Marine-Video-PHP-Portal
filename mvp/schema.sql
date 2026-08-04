@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS videos (
   views INT NOT NULL DEFAULT 0,
   watch_seconds BIGINT NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_bunny_video_id (bunny_video_id),
   FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -97,6 +98,15 @@ CREATE TABLE IF NOT EXISTS video_views (
 
 -- Migration for existing installs upgrading from a pre-bunny.net version:
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS bunny_video_id VARCHAR(64) NULL AFTER embed_url;
+
+-- Migration for existing installs upgrading to add bunny.net auto-import
+-- (enables safe auto-creation of videos uploaded directly via bunny.net's
+-- own dashboard, not just through this app). If your MySQL/MariaDB version
+-- doesn't support "IF NOT EXISTS" here (same issue as the ADD COLUMN line
+-- above on some shared hosts), just drop that clause and re-run — if the
+-- index already exists you'll get a harmless "Duplicate key name" error you
+-- can ignore, same as before:
+ALTER TABLE videos ADD UNIQUE INDEX IF NOT EXISTS uniq_bunny_video_id (bunny_video_id);
 
 -- Seed default settings
 INSERT IGNORE INTO settings (setting_key, setting_value) VALUES

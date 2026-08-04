@@ -30,14 +30,34 @@ if (!empty($data['VideoLibraryId']) && (string)$data['VideoLibraryId'] !== (stri
 $guid = $data['VideoGuid'];
 $newStatus = bunny_status_to_local((int)$data['Status']);
 
-$stmt = db()->prepare("UPDATE videos SET status = ? WHERE bunny_video_id = ?");
-$stmt->execute([$newStatus, $guid]);
+$stmt = db()->prepare('SELECT id, title FROM videos WHERE bunny_video_id = ?');
+$stmt->execute([$guid]);
+$video = $stmt->fetch();
 
-if ($newStatus === 'ready') {
-    $tStmt = db()->prepare('SELECT title FROM videos WHERE bunny_video_id = ?');
-    $tStmt->execute([$guid]);
-    $title = $tStmt->fetch()['title'] ?? $guid;
-    log_activity('video.bunny_webhook_ready', $title);
+if (!$video) {
+    // Never seen this bunny.net video before — most likely uploaded
+    // directly via bunny.net's own dashboard rather than through this app.
+    // Auto-create it so it shows up without a manual Import step.
+    $info = bunny_get_video($guid);
+    $title = $info['title'] ?? $guid;
+    try {
+        $minOrder = (int)(db()->query('SELECT COALESCE(MIN(sort_order), 0) m FROM videos')->fetch()['m']);
+        db()->prepare('INSERT INTO videos (title, bunny_video_id, sort_order, status) VALUES (?, ?, ?, ?)')
+            ->execute([$title, $guid, $minOrder - 1, $newStatus]);
+        log_activity('video.bunny_auto_imported', $title);
+    } catch (PDOException $e) {
+        // uniq_bunny_video_id race — another webhook call for this same new
+        // video already inserted it a moment ago; fall through to update.
+    }
+    $stmt->execute([$guid]);
+    $video = $stmt->fetch();
+}
+
+if ($video) {
+    db()->prepare('UPDATE videos SET status = ? WHERE id = ?')->execute([$newStatus, $video['id']]);
+    if ($newStatus === 'ready') {
+        log_activity('video.bunny_webhook_ready', $video['title']);
+    }
 }
 
 http_response_code(200);
