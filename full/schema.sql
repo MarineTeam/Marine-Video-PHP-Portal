@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS videos (
   view_count INT NOT NULL DEFAULT 0,
   watch_seconds BIGINT NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_bunny_video_id (bunny_video_id),
   FOREIGN KEY (series_id) REFERENCES series(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -338,6 +339,12 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
   ('site_name', 'Marine Team'),
   ('theme_preset', 'ocean'),
   ('theme_custom', '');
+
+-- Migration for existing installs upgrading to add bunny.net auto-import.
+-- If your MySQL/MariaDB doesn't support "IF NOT EXISTS" here, drop that
+-- clause and re-run — a "Duplicate key name" error if it already exists is
+-- harmless and can be ignored:
+ALTER TABLE videos ADD UNIQUE INDEX IF NOT EXISTS uniq_bunny_video_id (bunny_video_id);
 
 -- Seed the plugin registry (all inactive by default — enable from /admin/plugins.php)
 INSERT IGNORE INTO plugins (slug, active) VALUES

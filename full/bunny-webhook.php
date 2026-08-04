@@ -30,9 +30,43 @@ if (!empty($data['VideoLibraryId']) && (string)$data['VideoLibraryId'] !== (stri
 $guid = $data['VideoGuid'];
 $newStatus = bunny_status_to_local((int)$data['Status']);
 
-$stmt = db()->prepare('SELECT id, title, status AS old_status FROM videos WHERE bunny_video_id = ?');
+$stmt = db()->prepare('SELECT id, series_id, title, status AS old_status FROM videos WHERE bunny_video_id = ?');
 $stmt->execute([$guid]);
 $video = $stmt->fetch();
+
+if (!$video) {
+    // Never seen this bunny.net video before — most likely uploaded
+    // directly via bunny.net's own dashboard rather than through this app.
+    // The content model requires every video to belong to a series, and
+    // bunny.net's webhook has no way to tell us which one you'd want — so
+    // auto-created videos land in a find-or-create "Unsorted" series for
+    // you to re-file later, rather than guessing.
+    $info = bunny_get_video($guid);
+    $title = $info['title'] ?? $guid;
+
+    $sStmt = db()->prepare("SELECT id FROM series WHERE slug = 'unsorted'");
+    $sStmt->execute();
+    $unsorted = $sStmt->fetch();
+    if (!$unsorted) {
+        db()->prepare("INSERT INTO series (title, slug, published) VALUES ('Unsorted', 'unsorted', 1)")->execute();
+        $unsortedId = (int)db()->lastInsertId();
+    } else {
+        $unsortedId = (int)$unsorted['id'];
+    }
+
+    try {
+        $maxPos = (int)(db()->query("SELECT COALESCE(MAX(position),0) m FROM videos WHERE series_id = $unsortedId")->fetch()['m']);
+        $slug = unique_slug('videos', 'unsorted-' . $title . '-' . substr($guid, 0, 8));
+        db()->prepare('INSERT INTO videos (series_id, title, slug, bunny_video_id, position, status) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$unsortedId, $title, $slug, $guid, $maxPos + 1, $newStatus]);
+        audit_log('video.bunny_auto_imported', $title);
+    } catch (PDOException $e) {
+        // uniq_bunny_video_id race — another webhook call for this same new
+        // video already inserted it a moment ago; fall through to update.
+    }
+    $stmt->execute([$guid]);
+    $video = $stmt->fetch();
+}
 
 if ($video) {
     db()->prepare('UPDATE videos SET status = ? WHERE id = ?')->execute([$newStatus, $video['id']]);
